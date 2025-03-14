@@ -3,11 +3,11 @@ kind: Ingress
 metadata:
   name: tic-tac-toe-ingress
   annotations:
-    kubernetes.io/ingress.class: external-nginx  # Match the correct Ingress Class
     cert-manager.io/cluster-issuer: production
     # Add additional annotations as needed for your specific ingress controller
     # nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: external-nginx  # Use the correct Ingress class
   rules:
   - host: tic-tac-toe.neamulkabiremon.com  # Replace with your actual domain
     http:
