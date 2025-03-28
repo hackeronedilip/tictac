@@ -1,16 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: tic-tac-toe
-  namespace: tic-tac-game  # Added namespace
-  labels:
-    app: tic-tac-toe
+  name: tictac-service
 spec:
   type: LoadBalancer
-  ports:
-  - port: 80
-    targetPort: 80
-    protocol: TCP
-    name: http
   selector:
-    app: tic-tac-toe
+    app: tictac
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
