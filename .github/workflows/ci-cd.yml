@@ -175,6 +175,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.TOKEN }}
+          fetch-depth: 0  # Ensures we have full history to handle merges
 
       - name: Setup Git config
         run: |
@@ -191,20 +192,14 @@ jobs:
           NEW_IMAGE="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
           echo "Updating Kubernetes deployment image to ${NEW_IMAGE}..."
           
-          # Debug existing deployment.yaml
-          echo "Before update:"
-          grep -A 1 "image:" kubernetes/deployment.yaml || echo "Image line not found!"
-
-          # Update deployment.yaml with the new image
           sed -i "s|\(image:\s*\).*|\1${NEW_IMAGE}|g" kubernetes/deployment.yaml
-
-          # Debug updated deployment.yaml
-          echo "After update:"
-          grep -A 1 "image:" kubernetes/deployment.yaml
 
       - name: Commit and push changes
         run: |
           git add kubernetes/deployment.yaml
           git status
           git commit -m "Update Kubernetes deployment with new image tag: $IMAGE_TAG [skip ci]" || echo "No changes to commit"
+          
+          # Pull the latest changes before pushing to prevent conflicts
+          git pull --rebase origin main
           git push --verbose
