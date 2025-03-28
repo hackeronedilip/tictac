@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: tictac
-        image: 116981802760.dkr.ecr.us-east-1.amazonaws.com/tictac:sha-0a406e4
+        image: 116981802760.dkr.ecr.us-east-1.amazonaws.com/tictac:sha-3f83da0
         ports:
         - containerPort: 80
