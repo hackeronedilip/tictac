@@ -2,10 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tic-tac-toe
-  namespace: app  # Added namespace
   labels:
     app: tic-tac-toe
-    anmesaoc: tic-tac-toe
 spec:
   replicas: 3
   selector:
@@ -15,21 +13,19 @@ spec:
     metadata:
       labels:
         app: tic-tac-toe
-        anmesaoc: tic-tac-toe
     spec:
       containers:
       - name: tic-tac-toe
         image: 116981802760.dkr.ecr.us-east-1.amazonaws.com/tictac:sha-6529b93
-        # Image will be automatically updated by CI/CD pipeline
         imagePullPolicy: Always
         ports:
         - containerPort: 80
         resources:
           limits:
-            cpu: "0.5"
+            cpu: "500m"
             memory: "512Mi"
           requests:
-            cpu: "0.2"
+            cpu: "200m"
             memory: "256Mi"
         livenessProbe:
           httpGet:
