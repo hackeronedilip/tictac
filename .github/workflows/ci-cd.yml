@@ -99,8 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     env:
-      AWS_REGION: us-east-1
-      ECR_REPOSITORY: my-app-repo
+      AWS_REGION: ap-south-1
+      ECR_REPOSITORY: tictac
     outputs:
       image_tag: ${{ steps.set_output.outputs.image_tag }}
     steps:
