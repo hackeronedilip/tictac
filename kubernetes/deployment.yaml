@@ -1,44 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tic-tac-toe
-  namespace: tic-tac-game  # Added namespace
-  labels:
-    app: tic-tac-toe
+  name: tictac-app
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
-      app: tic-tac-toe
+      app: tictac
   template:
     metadata:
       labels:
-        app: tic-tac-toe
+        app: tictac
     spec:
       containers:
-      - name: tic-tac-toe
+      - name: tictac
         image: 116981802760.dkr.ecr.us-east-1.amazonaws.com/tictac:sha-6529b93
-        imagePullPolicy: Always
         ports:
         - containerPort: 80
-        resources:
-          limits:
-            cpu: "500m"
-            memory: "512Mi"
-          requests:
-            cpu: "200m"
-            memory: "256Mi"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-      imagePullSecrets:
-      - name: github-container-registry
