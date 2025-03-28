@@ -186,7 +186,7 @@ jobs:
           IMAGE_TAG: sha-${{ needs.docker.outputs.image_tag }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           AWS_REGION: us-east-1
-          ECR_REPOSITORY: my-app-repo
+          ECR_REPOSITORY: tictac
         run: |
           NEW_IMAGE="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}"
           echo "Updating Kubernetes deployment image to ${NEW_IMAGE}..."
