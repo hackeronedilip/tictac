@@ -129,9 +129,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write  # 🔥 FIX: Allow GitHub Actions to push changes
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # 🔥 FIX: Ensure token is used for push access
 
       - name: Update Kubernetes deployment file
         run: |
@@ -140,9 +144,9 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           git add kubernetes/deployment.yaml
           git commit -m "Update Kubernetes deployment with new image tag: $IMAGE_TAG [skip ci]" || echo "No changes to commit"
-          git pull --rebase origin main
-          git push --verbose
+          git pull --rebase origin main  # 🔥 FIX: Prevent conflicts before push
+          git push origin main  # 🔥 FIX: Explicitly push to 'main' branch
