@@ -127,36 +127,19 @@ jobs:
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG .
           docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:latest
 
-      - name: Install Trivy (Latest Version)
+      - name: Install Trivy (Stable Version)
         run: |
-          set -e  # Exit if any command fails
+          set -e
           sudo apt-get update && sudo apt-get install -y wget curl
-
-          # Fetch latest Trivy version dynamically
-          LATEST_VERSION=$(curl -sL https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
-
-          # Download Trivy binary
-          TRIVY_URL="https://github.com/aquasecurity/trivy/releases/download/${LATEST_VERSION}/trivy_${LATEST_VERSION#v}_Linux-64bit.tar.gz"
-          echo "Downloading Trivy from $TRIVY_URL..."
-
-          wget -O trivy.tar.gz "$TRIVY_URL" || { echo "Download failed! Retrying..."; sleep 5; wget -O trivy.tar.gz "$TRIVY_URL"; }
-
-          # Validate download
-          if [ ! -s trivy.tar.gz ]; then
-            echo "Downloaded file is empty or corrupted!"
-            exit 1
-          fi
-
-          # Extract Trivy and move it to /usr/local/bin
-          tar -zxvf trivy.tar.gz trivy || { echo "Extraction failed!"; exit 1; }
-          sudo mv trivy /usr/local/bin/
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          trivy --version
 
       - name: Scan Docker Image with Trivy
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           echo "Scanning Docker image for vulnerabilities..."
-          trivy image  ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG || (echo "Vulnerability scan failed!" && exit 1)
+          trivy image --exit-code 1 --severity HIGH,CRITICAL ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG
 
       - name: Push Docker Image to ECR
         env:
