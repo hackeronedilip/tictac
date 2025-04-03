@@ -129,9 +129,27 @@ jobs:
 
       - name: Install Trivy (Latest Version)
         run: |
+          set -e  # Exit if any command fails
           sudo apt-get update && sudo apt-get install -y wget curl
-          curl -sfL https://github.com/aquasecurity/trivy/releases/latest/download/trivy_1.9.2_Linux-64bit.tar.gz | tar -xzf - trivy_1.9.2/trivy
-          sudo mv trivy_1.9.2/trivy /usr/local/bin/
+
+          # Fetch latest Trivy version dynamically
+          LATEST_VERSION=$(curl -sL https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+
+          # Download Trivy binary
+          TRIVY_URL="https://github.com/aquasecurity/trivy/releases/download/${LATEST_VERSION}/trivy_${LATEST_VERSION#v}_Linux-64bit.tar.gz"
+          echo "Downloading Trivy from $TRIVY_URL..."
+
+          wget -O trivy.tar.gz "$TRIVY_URL" || { echo "Download failed! Retrying..."; sleep 5; wget -O trivy.tar.gz "$TRIVY_URL"; }
+
+          # Validate download
+          if [ ! -s trivy.tar.gz ]; then
+            echo "Downloaded file is empty or corrupted!"
+            exit 1
+          fi
+
+          # Extract Trivy and move it to /usr/local/bin
+          tar -zxvf trivy.tar.gz trivy || { echo "Extraction failed!"; exit 1; }
+          sudo mv trivy /usr/local/bin/
 
       - name: Scan Docker Image with Trivy
         env:
