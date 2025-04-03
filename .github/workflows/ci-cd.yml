@@ -119,9 +119,31 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build & Push Docker Image
+      - name: Build Docker Image with Unique Tag
+        env:
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:latest .
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG .
+          docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:latest
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update && sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz
+          tar zxvf trivy_Linux-64bit.tar.gz
+          sudo mv trivy /usr/local/bin/
+
+      - name: Scan Docker Image with Trivy
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          trivy image --exit-code 1 --severity CRITICAL,HIGH ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG
+
+      - name: Push Docker Image to ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:latest
 
   update-k8s:
@@ -130,16 +152,17 @@ jobs:
     needs: [docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
-      contents: write  # 🔥 FIX: Allow GitHub Actions to push changes
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}  # 🔥 FIX: Ensure token is used for push access
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Kubernetes deployment file
+        env:
+          IMAGE_TAG: ${{ github.sha }}
         run: |
-          IMAGE_TAG=latest
           sed -i "s|image: .*|image: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG|g" kubernetes/deployment.yaml
 
       - name: Commit and push changes
@@ -148,5 +171,5 @@ jobs:
           git config --global user.email "actions@github.com"
           git add kubernetes/deployment.yaml
           git commit -m "Update Kubernetes deployment with new image tag: $IMAGE_TAG [skip ci]" || echo "No changes to commit"
-          git pull --rebase origin main  # 🔥 FIX: Prevent conflicts before push
-          git push origin main  # 🔥 FIX: Explicitly push to 'main' branch
+          git pull --rebase origin main
+          git push origin main
