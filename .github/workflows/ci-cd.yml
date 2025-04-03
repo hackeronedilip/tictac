@@ -89,7 +89,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Setup .npmrc for Nexus
-        run: echo "registry=${{ secrets.NEXUS_REPO_URL }}/repository/Tictac/\n//${{ secrets.NEXUS_REPO_URL }}/repository/Tictac/:_authToken=${{ secrets.NEXUS_AUTH_TOKEN }}" > ~/.npmrc
+        run: |
+          echo "//${{ secrets.NEXUS_REPO_URL }}/repository/Tictac/:_authToken=${{ secrets.NEXUS_AUTH_TOKEN }}" > ~/.npmrc
 
       - name: Publish package to Nexus
         run: npm publish || echo "Skipping publish due to private setting"
@@ -126,10 +127,11 @@ jobs:
           docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG .
           docker tag ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:latest
 
-      - name: Install Trivy
+      - name: Install Trivy (Latest Version)
         run: |
-          sudo apt-get update && sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz
+          sudo apt-get update && sudo apt-get install -y wget curl
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep -Po '"tag_name": "\K.*?(?=")')
+          wget https://github.com/aquasecurity/trivy/releases/download/${LATEST_VERSION}/trivy_Linux-64bit.tar.gz
           tar zxvf trivy_Linux-64bit.tar.gz
           sudo mv trivy /usr/local/bin/
 
@@ -137,7 +139,8 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          trivy image --exit-code 1 --severity CRITICAL,HIGH ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG
+          echo "Scanning Docker image for vulnerabilities..."
+          trivy image --exit-code 1 --severity CRITICAL,HIGH ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com/tictac:$IMAGE_TAG || (echo "Vulnerability scan failed!" && exit 1)
 
       - name: Push Docker Image to ECR
         env:
@@ -172,4 +175,4 @@ jobs:
           git add kubernetes/deployment.yaml
           git commit -m "Update Kubernetes deployment with new image tag: $IMAGE_TAG [skip ci]" || echo "No changes to commit"
           git pull --rebase origin main
-          git push origin main
+          git push origin main || echo "No changes to push"
