@@ -1,8 +1,10 @@
 {
   "name": "vite-react-typescript-starter",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "publishConfig": {
+    "registry": "http://3.87.102.33:8081/repository/Tictac/"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -33,3 +35,4 @@
     "vitest": "^1.2.1"
   }
 }
+
