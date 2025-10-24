@@ -17,7 +17,7 @@ spec:
         - name: ecr-secret
       containers:
       - name: tictac
-        image: 959975882219.dkr.ecr.us-east-1.amazonaws.com/success:3281962e35d35349ab83d0ea2727d8e54d2712e4
+        image: 959975882219.dkr.ecr.us-east-1.amazonaws.com/success:cc8d217201e21ac0b3443f606ff5bb388192dc99
         imagePullPolicy: Always
         ports:
         - containerPort: 80
