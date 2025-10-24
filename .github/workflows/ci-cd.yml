@@ -87,20 +87,6 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      - name: Setup .npmrc for Nexus
-        run: |
-          echo "//${{ secrets.NEXUS_REPO_URL }}/repository/Tictac/:_authToken=${{ secrets.NEXUS_AUTH_TOKEN }}" > ~/.npmrc
-
-      - name: Publish package to Nexus
-        run: npm publish || echo "Skipping publish due to private setting"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist/
-
   docker:
     name: Docker Build & Push to AWS ECR
     runs-on: ubuntu-latest
